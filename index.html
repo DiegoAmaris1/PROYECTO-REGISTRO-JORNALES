@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Registro - Reconocimiento Facial</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🔐 Sistema de Registro de Entrada</h1>
+            <p class="subtitle">Control de Jornadas con Reconocimiento Facial</p>
+            <div id="clock" class="clock"></div>
+        </header>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Cargando modelos de IA...</p>
+            <p id="loadingStatus"></p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="main-content" style="display: none;">
+            
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-button active" data-tab="register">👤 Registrar Empleado</button>
+                <button class="tab-button" data-tab="checkin">✅ Marcar Entrada</button>
+                <button class="tab-button" data-tab="records">📋 Registros</button>
+                <button class="tab-button" data-tab="workdays">📅 Jornadas</button>
+                <button class="tab-button" data-tab="reports">📊 Reportes</button>
+            </div>
+
+            <!-- PANEL 1: REGISTRAR EMPLEADO (Solo datos básicos) -->
+            <div id="registerPanel" class="panel active">
+    <h2>Registrar Nuevo Empleado</h2>
+    <p class="info">Registra el empleado una sola vez con sus datos básicos, reconocimiento facial y firma digital</p>
+    
+    <div class="form-section">
+        <label>Nombre Completo:</label>
+        <input type="text" id="employeeName" placeholder="Ej: Juan Pérez García">
+        
+        <label>Cédula / ID:</label>
+        <input type="text" id="employeeId" placeholder="Ej: 1234567890">
+    </div>
+
+    <!-- ⭐ NUEVA SECCIÓN DE FIRMA DIGITAL -->
+    <div class="signature-section">
+        <h3>Firma Digital del Empleado</h3>
+        <p class="info">Dibuja la firma o carga una imagen escaneada</p>
+        
+        <div class="signature-tabs">
+            <button class="signature-tab active" data-sig-tab="draw">✍️ Dibujar Firma</button>
+            <button class="signature-tab" data-sig-tab="upload">📁 Cargar Imagen</button>
+        </div>
+
+        <!-- Canvas para dibujar -->
+        <div id="signatureDrawTab" class="signature-tab-content active">
+            <canvas id="signatureCanvas" width="400" height="150"></canvas>
+            <div class="signature-buttons">
+                <button id="clearSignature" class="btn btn-secondary">🗑️ Limpiar</button>
+            </div>
+        </div>
+
+        <!-- Upload de imagen -->
+        <div id="signatureUploadTab" class="signature-tab-content">
+            <input type="file" id="signatureUpload" accept="image/png,image/jpeg" style="display:none;">
+            <button id="selectSignatureFile" class="btn btn-primary">📁 Seleccionar Imagen</button>
+            <p class="upload-info">Formatos: PNG, JPG (máx 2MB)</p>
+            <canvas id="signaturePreview" width="400" height="150"></canvas>
+        </div>
+    </div>
+
+    <div class="camera-section">
+        <h3>Captura Facial</h3>
+        <video id="registerVideo" autoplay muted playsinline></video>
+        <canvas id="registerCanvas"></canvas>
+    </div>
+
+    <div class="buttons">
+        <button id="startRegisterCamera" class="btn btn-primary">📷 Iniciar Cámara</button>
+        <button id="capturePhoto" class="btn btn-success" disabled>📸 Capturar Rostro</button>
+        <button id="saveEmployee" class="btn btn-primary" disabled>💾 Guardar Empleado</button>
+    </div>
+
+    <div id="registerMessage" class="message"></div>
+</div>
+
+
+            <!-- PANEL 2: MARCAR ENTRADA (Seleccionar actividad ANTES de reconocer) -->
+            <div id="checkinPanel" class="panel">
+                <h2>Marcar Entrada de Jornada</h2>
+                <p class="info">Primero selecciona la actividad que realizarás hoy, luego reconoce tu rostro</p>
+
+                <!-- PASO 1: Seleccionar Actividad -->
+              <div id="activitySelection" class="form-section">
+    <h3>Paso 1: Selecciona tu actividad de hoy</h3>
+    
+    <!-- ⭐ NUEVO: Ciclo de Producción -->
+    <label>Ciclo de Producción:</label>
+    <select id="checkinCiclo">
+        <option value="">Seleccionar Ciclo...</option>
+        <option value="Ciclo 1">Ciclo 1</option>
+        <option value="Ciclo 2">Ciclo 2</option>
+        <option value="Ciclo 3">Ciclo 3</option>
+        <option value="Ciclo 4">Ciclo 4</option>
+        <option value="Pre-Cosecha">Pre-Cosecha</option>
+        <option value="Post-Cosecha">Post-Cosecha</option>
+    </select>
+    
+    <label>Nivel de Trabajo:</label>
+    <select id="checkinNivel">
+        <option value="">Seleccionar Nivel...</option>
+        <option value="1">Nivel 1 - Preparación Inicial y Adecuación de Terreno</option>
+        <option value="2">Nivel 2 - Trazado, Siembra y Establecimiento</option>
+        <option value="3">Nivel 3 - Manejo del Cultivo y Mantenimiento General</option>
+        <option value="4">Nivel 4 - Polinización y Control Reproductivo</option>
+        <option value="5">Nivel 5 - Cosecha, Post-cosecha y Clasificación</option>
+        <option value="6">Nivel 6 - Limpieza Final, Organización y Cierre de Ciclo</option>
+    </select>
+    
+    <label>Actividad Específica:</label>
+    <select id="checkinActivity" disabled>
+        <option value="">Primero selecciona un nivel...</option>
+    </select>
+
+    <!-- ⭐ NUEVO: Selector de Horas -->
+    <label>Horas Trabajadas:</label>
+    <select id="checkinHours">
+        <option value="1">1 hora - $7,500</option>
+        <option value="1.5">1.5 horas - $11,250</option>
+        <option value="2">2 horas - $15,000</option>
+        <option value="2.5">2.5 horas - $18,750</option>
+        <option value="3">3 horas - $22,500</option>
+        <option value="3.5">3.5 horas - $26,250</option>
+        <option value="4">4 horas - $30,000</option>
+        <option value="4.5">4.5 horas - $33,750</option>
+        <option value="5">5 horas - $37,500</option>
+        <option value="5.5">5.5 horas - $41,250</option>
+        <option value="6">6 horas - $45,000</option>
+        <option value="6.5">6.5 horas - $48,750</option>
+        <option value="7">7 horas - $52,500</option>
+        <option value="7.5">7.5 horas - $56,250</option>
+        <option value="8" selected>8 horas - $60,000 (Jornada Completa)</option>
+    </select>
+
+    <div class="jornal-display">
+        <strong id="jornalAmount">💰 Valor del Jornal: $60,000 COP</strong>
+    </div>
+
+    <button id="continueToRecognition" class="btn btn-primary" disabled>
+        ➡️ Continuar al Reconocimiento Facial
+    </button>
+</div>
+
+
+                <!-- PASO 2: Reconocimiento Facial -->
+                <div id="faceRecognition" class="camera-section" style="display: none;">
+                    <h3>Paso 2: Reconocimiento Facial</h3>
+                    <p class="info">Colócate frente a la cámara para confirmar tu identidad</p>
+                    
+                    <div class="selected-activity-display">
+                        <p><strong>Actividad seleccionada:</strong></p>
+                        <p id="selectedActivityDisplay"></p>
+                    </div>
+
+                    <video id="checkinVideo" autoplay muted playsinline></video>
+                    <canvas id="checkinCanvas"></canvas>
+
+                    <div class="buttons">
+                        <button id="startCheckinCamera" class="btn btn-primary">📷 Iniciar Reconocimiento</button>
+                        <button id="stopCheckinCamera" class="btn btn-secondary" disabled>⏹️ Detener</button>
+                        <button id="backToActivity" class="btn btn-secondary">⬅️ Cambiar Actividad</button>
+                    </div>
+                </div>
+
+                <div id="checkinMessage" class="message"></div>
+
+                <!-- Confirmación de Entrada -->
+                <div id="employeeInfo" class="success-box" style="display: none;">
+                    <h3>✅ Entrada Registrada Exitosamente</h3>
+                    <table>
+                        <tr><td><strong>Empleado:</strong></td><td id="infoName"></td></tr>
+                        <tr><td><strong>ID:</strong></td><td id="infoId"></td></tr>
+                        <tr><td><strong>Nivel:</strong></td><td id="infoNivel"></td></tr>
+                        <tr><td><strong>Actividad:</strong></td><td id="infoActivity"></td></tr>
+                        <tr><td><strong>Hora:</strong></td><td id="infoTime"></td></tr>
+                        <tr class="highlight"><td><strong>Valor Jornal:</strong></td><td>💰 $60,000</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PANEL 3: REGISTROS DE HOY -->
+            <div id="recordsPanel" class="panel">
+                <h2>Registros de Entrada - Hoy</h2>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEntries">0</div>
+                        <div class="stat-label">Entradas Hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalEmployees">0</div>
+                        <div class="stat-label">Empleados Registrados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalPayment">$0</div>
+                        <div class="stat-label">Total a Pagar Hoy</div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <thead>
+    <tr>
+        <th>Hora</th>
+        <th>Nombre</th>
+        <th>ID</th>
+        <th>Ciclo</th>
+        <th>Nivel</th>
+        <th>Actividad</th>
+        <th>Horas</th>
+        <th>Valor</th>
+    </tr>
+</thead>
+                        </thead>
+                        <tbody id="recordsBody">
+                            <tr><td colspan="6" class="no-data">No hay registros hoy</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="buttons">
+                    <button id="exportRecords" class="btn btn-primary">📥 Exportar CSV</button>
+                    <button id="clearRecords" class="btn btn-danger">🗑️ Limpiar Registros</button>
+                    <button id="clearEmployees" class="btn btn-danger">⚠️ Eliminar Empleados</button>
+                </div>
+
+                <div id="recordsMessage" class="message"></div>
+            </div>
+
+            <!-- PANEL 4: CONTROL DE JORNADAS -->
+            <div id="workdaysPanel" class="panel">
+                <h2>Control de Jornadas</h2>
+                <p class="info">Días trabajados y pagos acumulados por empleado</p>
+
+                <div class="filters">
+                    <label>Empleado:
+                        <select id="filterEmployee">
+                            <option value="">Todos</option>
+                        </select>
+                    </label>
+                    <label>Mes:
+                        <select id="filterMonth">
+                            <option value="">Todos</option>
+                        </select>
+                    </label>
+                    <label>Actividad:
+                        <select id="filterActivity">
+                            <option value="">Todas</option>
+                        </select>
+                    </label>
+                    <button id="applyFilters" class="btn btn-primary">🔍 Filtrar</button>
+                        <!-- ⭐ NUEVO BOTÓN AQUÍ -->
+                    <button id="deleteFilteredWorkdays" class="btn btn-danger">🗑️ Eliminar Filtradas</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalWorkdays">0</div>
+                        <div class="stat-label">Jornadas Totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalAccumulated">$0</div>
+                        <div class="stat-label">Total Acumulado</div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                       <thead>
+    <tr>
+        <th>Empleado</th>
+        <th>ID</th>
+        <th>Ciclo</th>
+        <th>Nivel</th>
+        <th>Actividad</th>
+        <th>Fecha</th>
+        <th>Horas</th>
+        <th>Valor</th>
+        <th>Firma</th>
+    </tr>
+</thead>
+                        <tbody id="workdaysBody">
+                            <tr><td colspan="6" class="no-data">No hay jornadas registradas</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="buttons">
+                    <button id="exportWorkdays" class="btn btn-primary">📥 Exportar Jornadas</button>
+                </div>
+            </div>
+
+   <!-- PANEL 5: REPORTES Y MÉTRICAS -->
+<div id="reportsPanel" class="panel">
+    <h2>Reportes y Métricas</h2>
+    
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number" id="reportTotalJornadas">0</div>
+            <div class="stat-label">Total Jornadas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="reportTotalPagos">$0</div>
+            <div class="stat-label">Total Pagado</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="reportActividades">0</div>
+            <div class="stat-label">Actividades Únicas</div>
+        </div>
+    </div>
+
+    <div class="report-section">
+        <h3>📊 Top 10 Actividades Más Realizadas</h3>
+        <div id="activityMetrics"></div>
+    </div>
+
+    <div class="report-section">
+        <h3>👥 Rendimiento por Empleado</h3>
+        <div id="employeeMetrics"></div>
+    </div>
+
+    <div class="report-section">
+        <h3>📈 Distribución por Nivel</h3>
+        <div id="levelMetrics"></div>
+    </div>
+
+    <div class="buttons">
+        <button id="refreshReports" class="btn btn-success">🔄 Actualizar</button>
+        <button id="exportDetailedReport" class="btn btn-primary">📥 Exportar Reporte</button>
+        <button id="exportPDF" class="btn btn-success">📄 Generar Reporte PDF</button>
+        <!-- ⭐ NUEVO BOTÓN AQUÍ -->
+        <button id="clearAllData" class="btn btn-danger">🗑️ Eliminar Todos los Datos</button>
+    </div>
+
+    <div id="reportsMessage" class="message"></div>
+</div>
+
+    <!-- Scripts -->
+    <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof faceapi === 'undefined') {
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
+                document.head.appendChild(script);
+            }
+        });
+    </script>
+    <script defer src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script defer src="pdf-generator.js"></script>
+<script defer src="google-sheets-sync.js"></script>
+</body>
+</html>
